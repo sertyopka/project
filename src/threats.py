@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException
 import httpx
 
 from src.notifications import missile_near_notification
+from src.mathformul import haversine
 router = APIRouter()
 
 from pathlib import Path
@@ -15,8 +16,8 @@ ICON = Path(__file__).resolve().parent / "logo.jpg"
 
 @router.get("/notification_threats")
 async def not_thearts(
-    user_lat: str,
-    user_lon: str
+    user_lat: float,
+    user_lon: float
 ):
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
@@ -29,9 +30,13 @@ async def not_thearts(
     threats = data.get("threats", [])
 
     for threat in threats:
-        #lat = threat.get("lat")
-        #lon = threat.get("lon")
+        missile_lat = threat.get("lat")
+        missile_lon = threat.get("lon")
         threat_type = threat.get("type")
+        distance = haversine(user_lat, user_lon, missile_lat, missile_lon)
+        if distance <= 50:
+            distance = round(distance)
+            missile_near_notification("🚀 Увага ціль!", f"{threat_type} навколо вас у {distance} км!", f"--icon={ICON}", "--app-name=Potushno")
     if threat_type == "uav":
         threat_type = "БпЛА"
     elif threat_type == "recon":
@@ -47,6 +52,5 @@ async def not_thearts(
     elif threat_type == "unknown":
         threat_type = "Невідома ціль!"
     elif threat_type == "fpv":
-        threat_type == "Фпв-дрон"
-    missile_near_notification("🚀 Увага ціль!", f"{threat_type} навколо вас!", f"--icon={ICON}", "--app-name=Potushno")
+        threat_type = "Фпв-дрон"
     return {"notification" : "sent"}
