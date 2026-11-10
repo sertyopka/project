@@ -14,6 +14,12 @@ API_URL = os.getenv("URL3")
 ICON = Path(__file__).resolve().parent / "logo.jpg"
 alert = False
 
+def district_loc(name):
+    if name.endswith("ий район"):
+        return name[:-len("ий район")] + "ому районі"
+    return name
+
+
 @router.get("/get_air_alert")
 async def get_air_alert(target_raion: str):
     global alert
@@ -46,10 +52,11 @@ async def get_air_alert(target_raion: str):
 
     if raion["level"] in ("red", "yellow") and not alert:
         alert = True
+        end_raion = district_loc(target_raion)
         if raion["level"] == "red":
             alert_notification(
                 "🔴 Повітряна тривога!",
-                "У Красноградському районі оголошено червоний рівень!",
+                f"У {end_raion} оголошено червоний рівень!",
                 f"--icon={ICON}",
                 "--app-name=Potushno"
             )
@@ -57,7 +64,7 @@ async def get_air_alert(target_raion: str):
         elif raion["level"] == "yellow":
             alert_notification(
                 "🟡 Повітряна тривога!",
-                "У Красноградському районі оголошено жовтий рівень!",
+                f"У {end_raion} оголошено жовтий рівень!",
                 f"--icon={ICON}",
                 "--app-name=Potushno"
             )
