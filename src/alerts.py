@@ -15,7 +15,7 @@ ICON = Path(__file__).resolve().parent / "logo.jpg"
 alert = False
 
 @router.get("/get_air_alert")
-async def get_air_alert():
+async def get_air_alert(target_raion: str):
     global alert
 
     try:
@@ -25,12 +25,23 @@ async def get_air_alert():
     except httpx.HTTPError:
         raise HTTPException(status_code=502)
     data = response.json()
-    target_raion = "Красноградський район"
     raion = next(
         (r for r in data["raions"] if r["name"] == target_raion),
         None
     )
-    if raion is None:
+    if raion is None and alert:
+
+        alert = False
+
+        alert_notification(
+            "🟢 Відбій повітряної тривоги!",
+            "Слідкуйте за подальшими повідомленнями!",
+            f"--icon={ICON}",
+            "--app-name=Potushno"
+        )
+        return {"Vidbiy" : "Nadislano"}
+
+    if raion is None and not alert:
         return {"status": "raion_not_found"}
 
     if raion["level"] in ("red", "yellow") and not alert:
@@ -43,24 +54,13 @@ async def get_air_alert():
                 "--app-name=Potushno"
             )
 
-        else:
+        elif raion["level"] == "yellow":
             alert_notification(
                 "🟡 Повітряна тривога!",
                 "У Красноградському районі оголошено жовтий рівень!",
                 f"--icon={ICON}",
                 "--app-name=Potushno"
             )
-
-    elif raion["level"] not in ("red", "yellow") and alert:
-
-        alert = False
-
-        alert_notification(
-            "🟢 Відбій повітряної тривоги!",
-            "Слідкуйте за подальшими повідомленнями!",
-            f"--icon={ICON}",
-            "--app-name=Potushno"
-        )
 
     return {"alert": alert}
 

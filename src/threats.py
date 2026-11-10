@@ -50,7 +50,7 @@ async def not_thearts(
     elif threat_type == "mig31k":
         threat_type = "Міг31к"
     elif threat_type == "unknown":
-        threat_type = "Невідома ціль!"
+        threat_type = "Невідома ціль"
     elif threat_type == "fpv":
         threat_type = "Фпв-дрон"
     return {"notification" : "sent"}
